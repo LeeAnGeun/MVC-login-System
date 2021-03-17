@@ -80,13 +80,13 @@ public class MemberController extends HttpServlet{
 			String pwd = req.getParameter("pwd");
 			
 			MemberDao dao = MemberDao.getInstance();
-
+			req.getSession().setAttribute("login", new MemberDto(id, pwd, null, null, 0));
 			Boolean b = dao.checkmember(id, pwd);
 			
 			req.setAttribute("b", b);
 			req.getRequestDispatcher("loginAf.jsp").forward(req, resp);
 		}
-		
+
 		// 게시판 화면 이동
 		else if(param.equals("bblist")) {
 			resp.sendRedirect("bbslist.jsp");
