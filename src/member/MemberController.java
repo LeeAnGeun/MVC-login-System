@@ -89,7 +89,7 @@ public class MemberController extends HttpServlet{
 
 		// 게시판 화면 이동
 		else if(param.equals("bblist")) {
-			resp.sendRedirect("bbslist.jsp");
+			resp.sendRedirect("bbs?param=searchbbs");
 		}
 	}
 }

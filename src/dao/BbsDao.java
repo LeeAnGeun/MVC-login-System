@@ -66,6 +66,52 @@ public class BbsDao {
 		return list;
 	}
 	
+	public BbsDto getBbs(int seq) {
+		String sql = " SELECT * "
+				+ " FROM BBS "
+				+ " WHERE SEQ=?";
+		
+		Connection conn = null;
+		PreparedStatement psmt = null;
+		ResultSet rs = null;
+		
+		BbsDto dto = null;
+		
+		try {
+			conn = DBConnection.getConnection();
+			System.out.println("1/4 getBbs success");
+		
+			psmt = conn.prepareStatement(sql);
+			System.out.println("2/4 getBbs success");
+			
+			psmt.setInt(1, seq);
+			
+			rs = psmt.executeQuery();
+			System.out.println("3/4 getBbs success");
+			
+			if(rs.next()) {				
+				dto = new BbsDto(rs.getInt(1), 
+								rs.getString(2), 
+								rs.getInt(3), 
+								rs.getInt(4), 
+								rs.getInt(5), 
+								rs.getString(6), 
+								rs.getString(7), 
+								rs.getString(8), 
+								rs.getInt(9), 
+								rs.getInt(10));
+			}
+			System.out.println("4/4 getBbs success");
+			
+		} catch (Exception e) {
+			System.out.println("getBbs fail");
+			e.printStackTrace();
+		} finally {
+			DBClose.close(conn, psmt, rs);			
+		}
+		return dto;
+	}
+	
 	// 게시물 추가
 	public boolean addBbslist(BbsDto dto) {
 		String sql = " INSERT INTO BBS( SEQ, ID, REF, STEP, DEPTH, "
@@ -102,41 +148,7 @@ public class BbsDao {
 		return count>0?true:false;
 	}
 	
-	public BbsDto getContent(int sqlnum) {
-		String sql = " SELECT * "
-				+ " FROM BBS "
-				+ " WHERE SEQ = " + sqlnum + " ";
-		
-		Connection conn = null;
-		PreparedStatement psmt = null;
-		ResultSet rs = null;
-		int count = 0;
-		BbsDto setDto = new BbsDto();
-		
-		try {
-			conn = DBConnection.getConnection();
-			psmt = conn.prepareStatement(sql);
-			rs = psmt.executeQuery();
-			
-			if(rs.next()) {
-
-			String id = rs.getString("id");
-			String date = rs.getString("wdate");
-			String title = rs.getString("title");
-			String content = rs.getString("content");
-			
-			setDto = new BbsDto(sqlnum, id, rs.getInt(3), rs.getInt(4), rs.getInt(5), title, content, date, rs.getInt(9), rs.getInt(10));
-			
-			}
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			DBClose.close(conn, psmt, rs);
-		}
-		
-		return setDto;
-	}
+	
 	
 	public void readcount(int seq) {
 		String sql = " UPDATE BBS "
@@ -309,5 +321,110 @@ public class BbsDao {
 		}
 		
 		return count>0?true:false;
+	}
+	
+	public List<BbsDto> getBbsPagingBbs(String choice, String search, int page) {
+		String sql = " SELECT SEQ, ID, REF, STEP, DEPTH, "
+				+ " TITLE, CONTENT, WDATE, DEL, READCOUNT "
+				+ " FROM ";
+		
+		sql += " (SELECT ROW_NUMBER()OVER(ORDER BY REF DESC, STEP ASC) AS RNUM, " + 
+				"	SEQ, ID, REF, STEP, DEPTH, TITLE, CONTENT, WDATE, DEL, READCOUNT " + 
+				"	FROM BBS ";
+		
+		String sWord = "";
+		if(choice.equals("title")) {
+			sWord = " WHERE TITLE LIKE '%" + search + "%' ";
+		}else if(choice.equals("content")) {
+			sWord = " WHERE CONTENT LIKE '%" + search + "%' ";
+		}else if(choice.equals("writer")) {
+			sWord = " WHERE ID='" + search + "'";
+		} 
+		sql = sql + sWord;
+		
+		sql = sql + " ORDER BY REF DESC, STEP ASC) ";
+		
+		sql = sql + " WHERE RNUM >= ? AND RNUM <= ? ";
+		
+		int start, end;
+		start = 1 + 10 * page; 
+		end = 10 + 10 * page;  
+		
+		Connection conn = null;
+		PreparedStatement psmt = null;
+		ResultSet rs = null;
+		BbsDto setDto = new BbsDto();
+		List<BbsDto> list = new ArrayList<BbsDto>();
+		int count = 0;
+		
+		try {
+			conn = DBConnection.getConnection();
+			
+			psmt = conn.prepareStatement(sql);
+			psmt.setInt(1, start);
+			psmt.setInt(2, end);
+			
+			rs = psmt.executeQuery();
+			
+			while(rs.next()) {
+				String id = rs.getString("id");
+				String date = rs.getString("wdate");
+				String title = rs.getString("title");
+				String content = rs.getString("content");
+				
+				setDto = new BbsDto(rs.getInt(1), id, rs.getInt(3), rs.getInt(4), rs.getInt(5), title, content, date, rs.getInt(9), rs.getInt(10));
+				list.add(setDto);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DBClose.close(conn, psmt, rs);
+		}
+		
+		return list;
+	}
+	
+	// 올렸던 글의 총수를 반환받기 위한 메소드
+	public int getAllBbs(String choice, String search) {
+		String sql = " SELECT COUNT(*) FROM BBS ";
+		
+		String sWord = "";
+		if(choice.equals("title")) {
+			sWord = " WHERE TITLE LIKE '%" + search + "%' ";
+		}else if(choice.equals("content")) {
+			sWord = " WHERE CONTENT LIKE '%" + search + "%' ";
+		}else if(choice.equals("writer")) {
+			sWord = " WHERE ID='" + search + "'";
+		}
+		
+		sql = sql + sWord;
+		
+		Connection conn = null;
+		PreparedStatement psmt = null;
+		ResultSet rs = null;
+		
+		int len = 0; //return 해줄 글의 총수
+		
+		
+		try {
+			conn = DBConnection.getConnection();
+			System.out.println("1/3 getAllBbs success");
+			
+			psmt= conn.prepareStatement(sql);
+			System.out.println("2/3 getAllBbs success");
+			
+			rs = psmt.executeQuery();
+			if(rs.next()) {
+				len = rs.getInt(1);
+			}
+			System.out.println("3/3 getAllBbs success");
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DBClose.close(conn, psmt, rs);
+		}
+		
+		return len;
 	}
 }

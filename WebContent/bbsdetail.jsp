@@ -20,13 +20,7 @@ MemberDto mem = (MemberDto)request.getSession().getAttribute("login");
 
 
 <%
-	Integer sqlNumber =  (Integer)request.getAttribute("seq");
-	System.out.println(sqlNumber);
-	
-	BbsDao dao = BbsDao.getInstance();
-	dao.readcount(sqlNumber);	// 조회수 증가
-	BbsDto setDto = dao.getContent(sqlNumber);
-	
+BbsDto setDto = (BbsDto)request.getAttribute("bbs");
 %>
 
 <form action="">
@@ -46,14 +40,14 @@ MemberDto mem = (MemberDto)request.getSession().getAttribute("login");
 			<td>조회수</td><td><%=setDto.getReadcount() %></td>
 		</tr>
 		<tr>
-			<td>정보</td><td>없음</td>
+			<td>정보</td><td><%=setDto.getRef() %>-<%=setDto.getStep() %>-<%=setDto.getDepth() %></td>
 		</tr>
 		<tr>
 			<td>내용</td><td><textarea rows="20" cols="60" readonly><%=setDto.getContent() %></textarea></td>
 		</tr>
 	</table>
 	<br>
-	<button type="button" onclick="answerbbs('<%=request.getParameter("seq") %>')" value="댓글추가">댓글추가</button>
+	<button type="button" onclick="answerbbs('<%=setDto.getSeq() %>')" value="댓글추가">댓글추가</button>
 	<% 
 	if(setDto.getId().equals(mem.getId())){
 		%>
@@ -70,13 +64,13 @@ MemberDto mem = (MemberDto)request.getSession().getAttribute("login");
 $(document).ready(function() {
 	
 	$("#remove").click(function() {
-		location.href = "bbs?param=delete&seq=<%=sqlNumber %>"
+		location.href = "bbs?param=delete&seq=<%=setDto.getSeq() %>"
 	});
 	$("#update").click(function() {
-		location.href = "bbs?param=update&seq=<%=sqlNumber %>"
+		location.href = "bbs?param=update&seq=<%=setDto.getSeq() %>"
 	});
 	$("#conlist").click(function() {
-		location.href = "bbs?param=bbslist";
+		location.href = "bbs?param=searchbbs";
 	});
 });
 

@@ -29,8 +29,10 @@ if(ologin == null){ // 로그인 세션이 없을경우
 mem = (MemberDto)ologin;
 System.out.println(mem.getId());
 %>
+
 <!-- 글을 작성할수 있는 form -->
-<form action="bbs?param=bbswriteAf" id="frm">
+<form action="bbs" id="frm">
+<input type="hidden" name="param" value="bbswriteAf">
 <div align="center">
 	<table border="1" >
 		<col width="100"><col width="300">

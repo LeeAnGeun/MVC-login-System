@@ -4,11 +4,12 @@
 <%@page import="dto.MemberDto"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+    
+<!-- 로그인이 된 상태 인지 확인 -->
 <%
 request.setCharacterEncoding("utf-8");
 Object ologin = request.getSession().getAttribute("login");
 MemberDto mem = null;
-
 if(ologin == null){ // 로그인 세션이 없을경우 
 	%>
 	<script>	
@@ -20,6 +21,7 @@ if(ologin == null){ // 로그인 세션이 없을경우
 mem = (MemberDto)ologin;
 %>
 
+<!-- 게시물 댓글 작업 -->
 <%!
 // 댓글의 depth와 image를 추가하는 함수
 // depth = 1	' '->
@@ -32,31 +34,49 @@ public String arrow(int depth){
 	for(int i = 0; i < depth; i++){
 		ts += nbsp;
 	}
-	
 	return depth==0 ? "":ts + rs;
 }
 %>
 
+<!-- list, bbsPage, pageNumber 값을 얻어오는 작업 -->
 <%
 // dao로 부터 list를 불러온다
-BbsDao dao = BbsDao.getInstance();
+List<BbsDto> list = (List)request.getAttribute("list");
+System.out.println("list = " + list);
+String bbsPage1 = (String)request.getAttribute("bbsPage");
+String pageNumber1 = (String)request.getAttribute("pageNumber");
+String choice = (String)request.getAttribute("choice");
+String search = (String)request.getAttribute("search");
 
-List<BbsDto> list = dao.getBbsList();
+int bbsPage = Integer.parseInt(bbsPage1);
+int pageNumber = Integer.parseInt(pageNumber1);
 %>
 
-</script>
- 
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <title>bbslist(Bulletin Board System) = 전자 게시판</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	let search = "<%=search %>";
+	if(search == "") return;
+	
+	let obj = document.getElementById("_choice");
+	obj.value = "<%=choice %>";
+	obj.setAttribute("seleted", "selected");
+});
+</script>
+<script type="text/javascript">
+</script>
+
 </head>
 <body>
+<h4 align="right" style="background-color: #f0f0f0">환영합니다. <%=mem.getId() %>님</h4>
 
-<%-- <h4 align="right" style="background-color: #f0f0f0">환영합니다. <%=mem.getId() %>님</h4>
-  --%>
-  
 <h1>게시판</h1>
 
 <form action="searchbbs.jsp">
@@ -102,23 +122,62 @@ if(list == null || list.size() == 0){ // 저장된 게시물으 없을 경우
 }
 %>
 </table>
+</form>
 <br><br>
+<div align="center">
+
+<!-- 페이징	[1] [2] [3] -->
+<%
+for(int i = 0;i < bbsPage; i++){
+	if(pageNumber == i){	// 현재 페이지		[1] 2 [3] 
+		%>
+		<span style="font-size: 15pt; color: #0000ff; font-weight: bold;">
+			<%=i + 1 %>
+		</span>&nbsp;
+		<%
+	}
+	else{
+		%>		
+		<a href="#none" title="<%=i+1 %>페이지" onclick="goPage(<%=i %>)"
+			style="font-size: 15pt; color: #000; font-weight: bold; text-decoration: none">
+			[<%=i + 1 %>]
+		</a>&nbsp;	
+		<%
+	}	
+}
+%>
+</div>
+<br><br>
+
 <a href="bbs?param=bbswrite">글쓰기</a>
+
 <br><br>
-<select name="search">
-	<option>검색</option>
-	<option value="id">작성자</option>
+<form action="bbs" id="frm">
+<input type="hidden" name="param" value="searchbbs">
+
+<div align="center">
+<select id="_choice" name="choice"> 
 	<option value="title">제목</option>
 	<option value="content">내용</option>
+	<option value="writer">작성자</option>
 </select>
-<input type="text" name="searchbbs">
-<input type="submit" value="검색"></button>
+
+<input type="text" id="_search" name="search" value="<%=search %>">
+
+<input type="submit" value="검색">
 </div>
-</form>
-
-<form action="bbsList.jsp">
 
 </form>
+
+<script type="text/javascript">
+function goPage( pageNum ) {
+	let choice = document.getElementById("_choice").value;
+	let search = document.getElementById("_search").value;
+	
+	location.href ="bbs?param=searchbbs&choice=" + choice + "&search=" + search + "&pageNumber=" + pageNum; 
+}
+</script>
+
 </body>
 </html>
 

@@ -6,10 +6,7 @@
     
 <%
 request.setCharacterEncoding("utf-8");
-int sseq =  Integer.parseInt( request.getParameter("seq") );
-
-BbsDto bbs = BbsDao.getInstance().getContent(sseq);
-System.out.println(bbs.toString());
+BbsDto bbs = (BbsDto)request.getAttribute("bbs");
 %>    
 <!DOCTYPE html>
 <html>

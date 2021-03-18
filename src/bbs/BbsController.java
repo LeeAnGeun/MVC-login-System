@@ -36,10 +36,17 @@ public class BbsController extends HttpServlet{
 		
 		// 게시물로 이동
 		if(param.equals("detail")) {
-			int seq = Integer.parseInt( req.getParameter("seq") );
-			System.out.println(seq);
+			String sseq = req.getParameter("seq");
+			int seq = Integer.parseInt(sseq);
 			
-			req.setAttribute("seq", seq);
+			BbsDao dao = BbsDao.getInstance();
+			
+			dao.readcount(seq);		// 조회수 늘리기
+			
+			BbsDto dto = dao.getBbs(seq);			
+			
+			req.setAttribute("bbs", dto);
+			
 			req.getRequestDispatcher("bbsdetail.jsp").forward(req, resp);
 		}
 		
@@ -51,20 +58,23 @@ public class BbsController extends HttpServlet{
 			BbsDao dao = BbsDao.getInstance();
 			dao.removeBbs(seq);
 			
-			resp.sendRedirect("bbslist.jsp");
+			resp.sendRedirect("bbs?param=searchbbs");
 		}
 		
 		// 게시물 수정 작성
 		if(param.equals("update")) {
 			int seq = Integer.parseInt( req.getParameter("seq") );
 			System.out.println(seq);
-			
-			req.setAttribute("seq", seq);
+
+			BbsDao dao = BbsDao.getInstance();
+			BbsDto bbs = dao.getBbs(seq);
+			req.setAttribute("bbs", bbs);
 			req.getRequestDispatcher("updatebbs.jsp").forward(req, resp);
 		}
 		
 		// 게시물 수정 저장
 		if(param.equals("updateAf")) {
+			System.out.println("여기까지는 들어옴22");
 			int seq = Integer.parseInt( req.getParameter("seq"));
 			String title = req.getParameter("title");
 			String content = req.getParameter("content");
@@ -72,14 +82,17 @@ public class BbsController extends HttpServlet{
 			
 			BbsDao dao = BbsDao.getInstance();
 			dao.updateBbs(seq, title, content);
-			resp.sendRedirect("bbslist.jsp");
+			resp.sendRedirect("bbs?param=searchbbs");
 		}
 		
 		// 댓글 작성
 		if(param.equals("answer")) {
 			int seq = Integer.parseInt( req.getParameter("seq"));
 			
-			req.setAttribute("seq", seq);
+			BbsDto bbs = BbsDao.getInstance().getBbs(seq);
+			System.out.println(bbs.toString());
+			
+			req.setAttribute("bbs", bbs);
 			req.getRequestDispatcher("answer.jsp").forward(req, resp);
 		}
 		
@@ -92,7 +105,8 @@ public class BbsController extends HttpServlet{
 			
 			BbsDao dao = BbsDao.getInstance();
 			dao.answer(seq, new BbsDto(id, title, content));
-			resp.sendRedirect("bbslist.jsp");	
+			
+			resp.sendRedirect("bbs?param=searchbbs");	
 		}
 		
 		// 글쓰기
@@ -102,15 +116,53 @@ public class BbsController extends HttpServlet{
 		
 		// 글쓰기 저장
 		if(param.equals("bbswriteAf")) {
+			System.out.println("여기");
 			String id = req.getParameter("id");
 			String title = req.getParameter("title");
 			String content = req.getParameter("content");
 			System.out.println(id + title + content);
+			
 			BbsDao dao = BbsDao.getInstance();
+			
 			dao.addBbslist(new BbsDto(id, title, content));
 			
-			resp.sendRedirect("bbslist.jsp");
+			resp.sendRedirect("bbs?param=searchbbs");
+		}
+		
+		// 게시물 보기
+		if(param.equals("searchbbs")) {
+			System.out.println("여기는 들어옴");
+			String choice = req.getParameter("choice");
+			String search = req.getParameter("search");
+			String spageNumber = req.getParameter("pageNumber");
+			System.out.println("spageNumber = " + spageNumber);
+			int pageNumber = 0; // 현재 페이지를 가르키는 변수
+
+			if(spageNumber != null && !spageNumber.equals("")){ // 페이지 넘버를 클릭했을 경우
+				pageNumber = Integer.parseInt(spageNumber);
+			}
+			System.out.println("pageNumber : " + pageNumber);
+			if(choice == null) {
+				choice = "";
+			}
+			if(search == null) {
+				search = "";
+			}
+			
+			BbsDao dao = BbsDao.getInstance();
+			List<BbsDto> list = dao.getBbsPagingBbs(choice, search, pageNumber);
+			req.setAttribute("list", list);
+			
+			int len = dao.getAllBbs(choice, search);
+			int bbsPage = len / 10;		// 23 -> 2
+			if((len % 10) > 0){
+				bbsPage = bbsPage + 1;
+			}
+			req.setAttribute("bbsPage", bbsPage + "");
+			req.setAttribute("pageNumber", pageNumber + "");
+			req.setAttribute("choice", choice);
+			req.setAttribute("search", search);
+			req.getRequestDispatcher("bbslist.jsp").forward(req, resp);
 		}
 	}
-	
 }
