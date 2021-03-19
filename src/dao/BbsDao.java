@@ -286,12 +286,12 @@ public class BbsDao {
 			
 			// insert
 			psmt = conn.prepareStatement(sql2);
-			psmt.setString(1, bbs.getId());
-			psmt.setInt(2, seq);
-			psmt.setInt(3, seq);
+			psmt.setString(3, bbs.getId());
 			psmt.setInt(4, seq);
-			psmt.setString(5, bbs.getTitle());
-			psmt.setString(6, bbs.getContent());
+			psmt.setInt(5, seq);
+			psmt.setInt(6, seq);
+			psmt.setString(7, bbs.getTitle());
+			psmt.setString(8, bbs.getContent());
 			System.out.println("4/6 success answer");
 			
 			count = psmt.executeUpdate();
